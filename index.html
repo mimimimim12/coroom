@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>coroom — 회의실 예약</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">co</span>room
+    </div>
+    <div class="date-nav">
+      <button id="prevDay" class="icon-btn" aria-label="이전 날">‹</button>
+      <input type="date" id="datePicker" />
+      <button id="nextDay" class="icon-btn" aria-label="다음 날">›</button>
+      <button id="todayBtn" class="ghost-btn">오늘</button>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><i class="swatch booked"></i>예약됨</span>
+      <span class="legend-item"><i class="swatch free"></i>빈 시간 (클릭해 예약)</span>
+    </div>
+  </header>
+
+  <main>
+    <div id="board" class="board">
+      <!-- 시간축 + 회의실 컬럼이 JS로 렌더링됨 -->
+    </div>
+    <p id="status" class="status-line"></p>
+  </main>
+
+  <!-- 예약 생성 모달 -->
+  <div id="createModal" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+      <div class="modal-head">
+        <h2 id="createTitle">새 예약</h2>
+        <button class="icon-btn" data-close>×</button>
+      </div>
+      <form id="createForm" class="modal-body">
+        <div class="fixed-info">
+          <div><span class="lbl">회의실</span><strong id="f_roomName"></strong></div>
+          <div><span class="lbl">날짜</span><strong id="f_dateLabel"></strong></div>
+        </div>
+        <div class="room-meta" id="f_roomMeta"></div>
+
+        <div class="grid2">
+          <label>시작 시간
+            <select id="f_start" required></select>
+          </label>
+          <label>종료 시간
+            <select id="f_end" required></select>
+          </label>
+        </div>
+        <label>예약자
+          <input type="text" id="f_reserver" placeholder="이름" required maxlength="20" />
+        </label>
+        <label>부서
+          <input type="text" id="f_department" placeholder="예: 마케팅팀" required maxlength="30" />
+        </label>
+        <label>회의 제목
+          <input type="text" id="f_title" placeholder="회의 목적" required maxlength="60" />
+        </label>
+
+        <p class="form-error hidden" id="createError"></p>
+
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn" data-close>닫기</button>
+          <button type="submit" class="primary-btn" id="createSubmit">예약하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 예약 상세 모달 -->
+  <div id="detailModal" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="modal-head">
+        <h2 id="detailTitle">예약 상세</h2>
+        <button class="icon-btn" data-close>×</button>
+      </div>
+      <div class="modal-body">
+        <dl class="detail-list" id="detailList"></dl>
+        <p class="form-error hidden" id="detailError"></p>
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn" data-close>닫기</button>
+          <button type="button" class="danger-btn" id="cancelResvBtn">예약 취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
