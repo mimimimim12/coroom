@@ -145,7 +145,7 @@ main { padding: 22px; }
 .modal-body label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
 .modal-body input, .modal-body select {
   border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
-  font-size: 15px; color: var(--ink); background: #fff;
+  font-size: 16px; color: var(--ink); background: #fff; /* 16px: iOS 포커스 시 확대 방지 */
 }
 .modal-body input:focus, .modal-body select:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -164,7 +164,71 @@ main { padding: 22px; }
 .badge.confirmed { background: #e3f5ea; color: #1a7f45; }
 .badge.cancelled { background: #f3f4f6; color: #8a8f9c; }
 
+/* ---- 오프라인 표시 ---- */
+.offline-tag {
+  margin-left: 10px; font-size: 12px; font-weight: 600;
+  color: #92400e; background: #fef3c7; border: 1px solid #fcd34d;
+  padding: 2px 10px; border-radius: 999px; vertical-align: middle;
+}
+
+/* ---- 홈 화면에 추가 안내 배너 ---- */
+.install-banner {
+  position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 45;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: 12px;
+  max-width: 520px; margin: 0 auto;
+  background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(30, 40, 80, .22);
+  padding: 12px 14px;
+  animation: ib-in .28s ease-out;
+}
+@keyframes ib-in { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.install-banner.hidden { display: none; }
+.ib-icon img { display: block; border-radius: 12px; }
+.ib-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.ib-text strong { font-size: 14px; }
+.ib-text span { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.ib-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.ib-actions .primary-btn { padding: 9px 16px; font-size: 14px; }
+
+/* ---- 모바일 반응형 ---- */
+.topbar { padding-left: max(22px, env(safe-area-inset-left)); padding-right: max(22px, env(safe-area-inset-right)); }
+.board { -webkit-overflow-scrolling: touch; }
+
 @media (max-width: 640px) {
-  .legend { width: 100%; margin-left: 0; }
+  .topbar { gap: 10px 14px; padding: 10px 14px; }
+  .brand { font-size: 20px; width: 100%; }
+  .date-nav { flex: 1; }
+  .date-nav input[type=date] { flex: 1; min-width: 0; }
+  .legend { width: 100%; margin-left: 0; gap: 14px; font-size: 12px; }
+  main { padding: 12px; }
+  .board { border-radius: 12px; }
+  /* 화면이 좁을 땐 컬럼 폭을 줄여 가로 스크롤 최소화 */
+  .col-head { padding: 10px 6px; }
+  .col-head .rname { font-size: 13px; }
+  .status-line { font-size: 12px; }
+
+  /* 모달을 하단 시트처럼 */
+  .modal-backdrop { align-items: flex-end; padding: 0; }
+  .modal {
+    max-width: 100%; border-radius: 18px 18px 0 0;
+    max-height: 92vh; display: flex; flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .modal-body { overflow-y: auto; }
+  .grid2 { grid-template-columns: 1fr 1fr; }
+
+  /* 터치 타깃 확대 */
+  .icon-btn { width: 40px; height: 40px; }
+  .ghost-btn, .primary-btn, .danger-btn { padding: 11px 16px; }
+}
+
+@media (max-width: 380px) {
   .grid2 { grid-template-columns: 1fr; }
+}
+
+/* 터치 기기에서는 hover 배경 제거(잔상 방지) */
+@media (hover: none) {
+  .hour-cell:hover { background: transparent; }
 }

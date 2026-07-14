@@ -1,5 +1,5 @@
 /* CoRoom Service Worker — 앱 셸 캐싱 */
-const CACHE = "coroom-v1";
+const CACHE = "coroom-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,8 +7,11 @@ const APP_SHELL = [
   "./app.js",
   "./config.js",
   "./manifest.json",
+  "./assets/icons/icon-96.png",
+  "./assets/icons/icon-180.png",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
+  "./assets/icons/favicon.ico",
 ];
 
 self.addEventListener("install", (event) => {

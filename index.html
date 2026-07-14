@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CoRoom — 회의실 예약</title>
 
   <!-- PWA -->
@@ -25,6 +25,7 @@
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">Co</span>Room
+      <span id="offlineTag" class="offline-tag hidden">오프라인</span>
     </div>
     <div class="date-nav">
       <button id="prevDay" class="icon-btn" aria-label="이전 날">‹</button>
@@ -44,6 +45,19 @@
     </div>
     <p id="status" class="status-line"></p>
   </main>
+
+  <!-- 홈 화면에 추가 안내 배너 -->
+  <div id="installBanner" class="install-banner hidden" role="dialog" aria-label="앱 설치 안내">
+    <div class="ib-icon"><img src="assets/icons/icon-96.png" alt="CoRoom" width="44" height="44" /></div>
+    <div class="ib-text">
+      <strong>CoRoom을 홈 화면에 추가</strong>
+      <span id="ibHint">앱처럼 전체화면으로 빠르게 열 수 있어요.</span>
+    </div>
+    <div class="ib-actions">
+      <button id="ibInstall" class="primary-btn">설치</button>
+      <button id="ibClose" class="icon-btn" aria-label="닫기">×</button>
+    </div>
+  </div>
 
   <!-- 예약 생성 모달 -->
   <div id="createModal" class="modal-backdrop hidden">

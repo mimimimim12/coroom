@@ -47,22 +47,54 @@
   }
   function setStatus(msg) { statusEl.textContent = msg; }
 
+  /* ---------- 오프라인 캐시 ---------- */
+  const LS_ROOMS = "coroom_rooms";
+  const LS_RESV = "coroom_resv_map";   // { "YYYY-MM-DD": [...] }
+  let offline = false;
+
+  function cacheSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function cacheGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+
+  const offlineTag = document.getElementById("offlineTag");
+  function markOffline(state) {
+    offline = state;
+    offlineTag.classList.toggle("hidden", !state);
+  }
+
   /* ---------- 데이터 ---------- */
   async function loadRooms() {
-    const { data, error } = await sb.from("rooms").select("*").order("id");
-    if (error) { setStatus("회의실 정보를 불러오지 못했습니다: " + error.message); return; }
-    rooms = data;
+    try {
+      const { data, error } = await sb.from("rooms").select("*").order("id");
+      if (error) throw error;
+      rooms = data;
+      cacheSet(LS_ROOMS, data);
+    } catch (e) {
+      const cached = cacheGet(LS_ROOMS);
+      if (cached && cached.length) { rooms = cached; markOffline(true); }
+      else { setStatus("회의실 정보를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요."); }
+    }
   }
 
   async function loadReservations() {
-    const { data, error } = await sb
-      .from("reservations")
-      .select("*")
-      .eq("date", currentDate)
-      .eq("status", "확정")
-      .order("start_time");
-    if (error) { setStatus("예약을 불러오지 못했습니다: " + error.message); return; }
-    dayReservations = data;
+    try {
+      const { data, error } = await sb
+        .from("reservations")
+        .select("*")
+        .eq("date", currentDate)
+        .eq("status", "확정")
+        .order("start_time");
+      if (error) throw error;
+      dayReservations = data;
+      markOffline(false);
+      // 날짜별로 마지막 조회 결과를 저장 → 오프라인에서도 마지막 화면 표시
+      const map = cacheGet(LS_RESV) || {};
+      map[currentDate] = data;
+      cacheSet(LS_RESV, map);
+    } catch (e) {
+      const map = cacheGet(LS_RESV) || {};
+      dayReservations = map[currentDate] || [];
+      markOffline(true);
+    }
   }
 
   async function nextReservationId() {
@@ -125,7 +157,11 @@
       board.appendChild(col);
     });
 
-    setStatus(`${dateLabel(currentDate)} · 확정 예약 ${dayReservations.length}건 — 빈 칸을 클릭하면 예약할 수 있어요.`);
+    if (offline) {
+      setStatus(`${dateLabel(currentDate)} · 확정 예약 ${dayReservations.length}건 — 오프라인 상태입니다. 마지막으로 불러온 화면을 보여드려요.`);
+    } else {
+      setStatus(`${dateLabel(currentDate)} · 확정 예약 ${dayReservations.length}건 — 빈 칸을 클릭하면 예약할 수 있어요.`);
+    }
   }
 
   function makeBlock(rv) {
@@ -175,6 +211,10 @@
   }
 
   function openCreate(room, hour) {
+    if (offline || !navigator.onLine) {
+      alert("오프라인 상태에서는 예약할 수 없어요. 인터넷 연결 후 다시 시도해 주세요.");
+      return;
+    }
     createContext = { room };
     createError.classList.add("hidden");
     document.getElementById("f_roomName").textContent = room.name;
@@ -308,6 +348,67 @@
     await loadReservations();
     render();
   }
+
+  /* ---------- 온라인/오프라인 감지 ---------- */
+  window.addEventListener("online", () => { markOffline(false); refresh(); });
+  window.addEventListener("offline", () => { markOffline(true); render(); });
+
+  /* ---------- "홈 화면에 추가" 안내 배너 ---------- */
+  (function initInstallPrompt() {
+    const banner = document.getElementById("installBanner");
+    const ibInstall = document.getElementById("ibInstall");
+    const ibClose = document.getElementById("ibClose");
+    const ibHint = document.getElementById("ibHint");
+    if (!banner) return;
+
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+    const dismissed = localStorage.getItem("coroom_install_dismissed") === "1";
+    if (isStandalone || dismissed) return;   // 이미 설치했거나 닫았으면 표시 안 함
+
+    let deferredPrompt = null;
+
+    function show() { banner.classList.remove("hidden"); }
+    function hide() { banner.classList.add("hidden"); }
+
+    // Android / Chrome 계열: 네이티브 설치 프롬프트 사용
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      show();
+    });
+
+    ibInstall.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      hide();
+    });
+
+    ibClose.addEventListener("click", () => {
+      hide();
+      localStorage.setItem("coroom_install_dismissed", "1");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      hide();
+      localStorage.setItem("coroom_install_dismissed", "1");
+    });
+
+    // iOS Safari: beforeinstallprompt 미지원 → 수동 안내 표시
+    const ua = navigator.userAgent;
+    const isIOS = /iphone|ipad|ipod/i.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isIOSSafari = isIOS && /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
+    if (isIOSSafari) {
+      ibInstall.style.display = "none";
+      ibHint.innerHTML =
+        '하단 <b>공유 <span aria-hidden="true">⬆️</span></b> 버튼 → <b>홈 화면에 추가</b>를 눌러 설치하세요.';
+      show();
+    }
+  })();
 
   async function init() {
     fillTimeOptions();
